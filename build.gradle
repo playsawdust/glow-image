@@ -17,7 +17,7 @@ buildscript {
 plugins {
 	id 'java';
 	id 'eclipse';
-	//id 'org.cadixdev.licenser' version '0.6.1';
+	id 'org.cadixdev.licenser' version '0.6.1';
 }
 //apply plugin: 'maven-publish'
 
@@ -32,7 +32,7 @@ version = '0.0.1'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(16)
+		languageVersion = JavaLanguageVersion.of(11)
 	}
 }
 
@@ -55,10 +55,10 @@ tasks.withType(JavaCompile) {
 	options.encoding = "UTF-8"
 }
 
-//license {
-//	header = project.file('headers/mpl2.txt')
-//	include '**/*.java'
-//}
+license {
+	header = project.file('headers/mpl2.txt')
+	include '**/*.java'
+}
 
 java {
 	//withJavadocJar()
