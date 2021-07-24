@@ -1,0 +1,55 @@
+buildscript {
+	repositories {
+		maven {
+			url "https://plugins.gradle.org/m2/"
+		}
+	}
+	dependencies {
+		classpath "net.minecrell.licenser:net.minecrell.licenser.gradle.plugin:0.4.1"
+	}
+}
+
+apply plugin: 'java-library'
+//apply plugin: 'maven-publish'
+
+// grumble grumble...
+if (!project.getPlugins().hasPlugin('net.minecrell.licenser')) {
+	apply plugin: 'net.minecrell.licenser'
+}
+
+group = 'com.playsawdust.chipper'
+archivesBaseName = 'glow-image'
+version = '0.0.1'
+
+java {
+	toolchain {
+        languageVersion = JavaLanguageVersion.of(15)
+    }
+}
+
+repositories {
+	mavenCentral()
+	maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+	maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+	//api 'org.slf4j:slf4j-api:1.7.9'
+	//api 'com.google.guava:guava:28.2-jre'
+	api 'blue.endless:jankson:1.2.0'
+	api 'org.joml:joml:1.9.12'
+}
+
+license {
+	header = file('headers/mpl2.txt')
+	include '**/*.java'
+}
+
+java {
+	//withJavadocJar()
+	//withSourcesJar()
+}
+
+tasks.withType(GenerateModuleMetadata) {
+	enabled = false
+}
