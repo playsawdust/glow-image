@@ -35,5 +35,9 @@ build/
 bin/
 run/
 
+# Test stuff for glow-image
+in/
+out/
+
 # gradle
 !gradle-wrapper.jar

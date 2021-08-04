@@ -18,6 +18,11 @@ import java.io.InputStream;
 import java.util.zip.InflaterInputStream;
 
 import com.playsawdust.chipper.glow.image.ImageData;
+import com.playsawdust.chipper.glow.image.io.png.IDATChunk;
+import com.playsawdust.chipper.glow.image.io.png.IENDChunk;
+import com.playsawdust.chipper.glow.image.io.png.IHDRChunk;
+import com.playsawdust.chipper.glow.image.io.png.PNGChunk;
+import com.playsawdust.chipper.glow.image.io.png.RawChunk;
 
 public class PNGImageLoader {
 	/** The first two bytes of a file or stream can be used to uniquely identify it as a PNG file. Specifically, these two bytes. */
@@ -25,13 +30,8 @@ public class PNGImageLoader {
 	/** {@code 0x89 'P' 'N' 'G' '\r' '\n' CTRL-Z '\n'}, carefully chosen to make your text editor think twice before opening, and do 7-bit integrity checks, right from the first dword */
 	public static final long PNG_MAGIC = 0x89504e470d0a1a0aL;
 	
-	private static final int CHUNK_IHDR = (byte)'I' << 24 | (byte)'H' << 16 | (byte)'D' << 8 | (byte)'R';
-	private static final int CHUNK_IDAT = (byte)'I' << 24 | (byte)'D' << 16 | (byte)'A' << 8 | (byte)'T';
-	private static final int CHUNK_IEND = (byte)'I' << 24 | (byte)'E' << 16 | (byte)'N' << 8 | (byte)'D';
-	
-	private static final int COLORTYPE_RGB  = 2;
-	private static final int COLORTYPE_RGBA = 6;
-	
+	public static final int COLORTYPE_RGB  = 2;
+	public static final int COLORTYPE_RGBA = 6;
 	
 	public static ImageData load(InputStream in) throws IOException {
 		try(in) {
@@ -45,7 +45,7 @@ public class PNGImageLoader {
 			ByteArrayOutputStream imageDataStream = new ByteArrayOutputStream();
 			while(true) {
 				try {
-					PNGChunk chunk = PNGChunk.read(data);
+					PNGChunk chunk = PNGChunk.readChunk(data);
 					if (chunk instanceof IHDRChunk) {
 						ihdr = (IHDRChunk) chunk;
 						result = new ImageData(ihdr.width, ihdr.height);
@@ -187,78 +187,5 @@ public class PNGImageLoader {
 			return up;
 		}
 		return upLeft;
-	}
-	
-	private static class PNGChunk {
-		
-		public static PNGChunk read(DataInputStream in) throws IOException {
-			int length = in.readInt();
-			int chunkType = in.readInt();
-			switch(chunkType) {
-			case CHUNK_IHDR:
-				IHDRChunk ihdrChunk = new IHDRChunk();
-				ihdrChunk.width = in.readInt();
-				ihdrChunk.height = in.readInt();
-				ihdrChunk.bitDepth = in.read();
-				ihdrChunk.colorType = in.read();
-				ihdrChunk.compression = in.read();
-				ihdrChunk.filterMethod = in.read();
-				ihdrChunk.interlaceMethod = in.read();
-				in.readInt(); //throw away the CRC
-				
-				return ihdrChunk;
-			case CHUNK_IDAT:
-				byte[] idatData = new byte[length];
-				in.read(idatData);
-				in.readInt(); //throw away the CRC
-				IDATChunk idat = new IDATChunk();
-				idat.data = idatData;
-				return idat;
-			case CHUNK_IEND:
-				if (length>0) in.skip(length); //Specified to never happen but let's check anyway
-				in.readInt(); //throw away the CRC
-				return new IENDChunk();
-			default:
-				byte[] data = new byte[length];
-				in.read(data);
-				in.readInt(); //throw away the CRC
-				RawChunk rawChunk = new RawChunk();
-				rawChunk.chunkType = chunkType;
-				rawChunk.data = data;
-				return rawChunk;
-			}
-		}
-	}
-	
-	private static class RawChunk extends PNGChunk {
-		int chunkType;
-		byte[] data;
-		
-		public String getAsciiType() {
-			String result = "";
-			result += (char) ((chunkType >> 24) & 0xFF);
-			result += (char) ((chunkType >> 16) & 0xFF);
-			result += (char) ((chunkType >>  8) & 0xFF);
-			result += (char) ((chunkType >>  0) & 0xFF);
-			return result;
-		}
-	}
-	
-	private static class IDATChunk extends PNGChunk {
-		byte[] data;
-	}
-	
-	private static class IENDChunk extends PNGChunk {
-		
-	}
-	
-	private static class IHDRChunk extends PNGChunk {
-		int width;
-		int height;
-		int bitDepth;
-		int colorType;
-		int compression;
-		int filterMethod;
-		int interlaceMethod;
 	}
 }
